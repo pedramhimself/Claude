@@ -1,0 +1,193 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; background: #05040a; }
+  svg { display: block; }
+  text { font-family: "Inter", sans-serif; font-weight: 600; }
+</style>
+</head>
+<body>
+<svg id="s" width="1920" height="1080" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glowBlue" cx="0.12" cy="0.02" r="0.55">
+      <stop offset="0" stop-color="#1a1ad8" stop-opacity="0.55"/>
+      <stop offset="0.45" stop-color="#10107a" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#05040a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowTeal" cx="0.9" cy="1.0" r="0.4">
+      <stop offset="0" stop-color="#0c6e6e" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#05040a" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1"/>
+    </pattern>
+    <filter id="blur" filterUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+    <filter id="blurBig" x="-50%" y="-100%" width="200%" height="300%">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="#05040a"/>
+  <rect width="1920" height="1080" fill="url(#glowBlue)"/>
+  <rect width="1920" height="1080" fill="url(#glowTeal)"/>
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+
+  <g id="ghost"></g>
+  <g id="wires"></g>
+  <g id="nodes"></g>
+  <g id="heads"></g>
+</svg>
+
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const TEAL = "#4ff3ee", PURPLE = "#b43cff", BLUEMID = "#6d8dff";
+const CY = 540, H = 100, R = 50;
+
+const nodes = {
+  a:  { label: "Beginner",       x: 330,  y: CY },
+  m1: { label: "Listening",      x: 960,  y: CY - 240 },
+  m2: { label: "Speaking",       x: 960,  y: CY },
+  m3: { label: "Practice",       x: 960,  y: CY + 240 },
+  z:  { label: "Fluent English", x: 1580, y: CY },
+};
+
+// Timeline (seconds)
+const T = {
+  fadeIn: [0.0, 0.4],
+  aOn: [0.4, 0.65],
+  wire1: [0.6, 1.35],      // Beginner -> middle (staggered per branch)
+  stagger: [0.0, 0.06, 0.12],
+  wire2: [1.5, 2.3],       // middle -> Fluent English
+  zOn: [2.25, 2.6],
+  total: 4.2,
+};
+
+const clamp = (v, a=0, b=1) => Math.max(a, Math.min(b, v));
+const prog = (t, [s, e]) => clamp((t - s) / (e - s));
+const ease = p => p < 0.5 ? 4*p*p*p : 1 - Math.pow(-2*p + 2, 3) / 2;
+const easeOut = p => 1 - Math.pow(1 - p, 3);
+const mix = (a, b, p) => a + (b - a) * p;
+function mixColor(c1, c2, p) {
+  const h = c => [1,3,5].map(i => parseInt(c.slice(i, i+2), 16));
+  const [r1,g1,b1] = h(c1), [r2,g2,b2] = h(c2);
+  return `rgb(${Math.round(mix(r1,r2,p))},${Math.round(mix(g1,g2,p))},${Math.round(mix(b1,b2,p))})`;
+}
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+// ---- Build nodes ----
+const gNodes = document.getElementById("nodes");
+for (const id in nodes) {
+  const n = nodes[id];
+  const g = el("g", {}, gNodes);
+  const glow = el("rect", { rx: R, ry: R, filter: "url(#blurBig)", fill: "none", "stroke-width": 10 }, g);
+  const box  = el("rect", { rx: R, ry: R, "stroke-width": 3 }, g);
+  const dot  = el("circle", { r: 8 }, g);
+  const txt  = el("text", { "font-size": 40, "dominant-baseline": "central" }, g);
+  txt.textContent = n.label;
+  const tw = txt.getComputedTextLength();
+  const w = tw + 140;
+  n.w = w; n.left = n.x - w/2; n.right = n.x + w/2;
+  for (const r of [glow, box]) {
+    r.setAttribute("x", n.left); r.setAttribute("y", n.y - H/2);
+    r.setAttribute("width", w); r.setAttribute("height", H);
+  }
+  const contentLeft = n.x - (tw + 34) / 2;
+  dot.setAttribute("cx", contentLeft + 8); dot.setAttribute("cy", n.y);
+  txt.setAttribute("x", contentLeft + 34); txt.setAttribute("y", n.y + 1);
+  Object.assign(n, { g, glow, box, dot, txt });
+}
+
+// ---- Build wires ----
+function curve(x1, y1, x2, y2) {
+  const dx = (x2 - x1) * 0.5;
+  return `M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`;
+}
+const gGhost = document.getElementById("ghost"), gWires = document.getElementById("wires"), gHeads = document.getElementById("heads");
+const wires = [];
+function addWire(from, to, kind, idx) {
+  const d = curve(from.right, from.y, to.left, to.y);
+  el("path", { d, fill: "none", stroke: "#ffffff", "stroke-opacity": 0.13, "stroke-width": 2.5 }, gGhost);
+  let stroke = TEAL;
+  if (kind === 2) {
+    const gid = "grad" + idx;
+    const lg = el("linearGradient", { id: gid, gradientUnits: "userSpaceOnUse", x1: from.right, y1: 0, x2: to.left, y2: 0 }, document.querySelector("defs"));
+    el("stop", { offset: 0, "stop-color": BLUEMID }, lg);
+    el("stop", { offset: 1, "stop-color": PURPLE }, lg);
+    stroke = `url(#${gid})`;
+  }
+  const glow = el("path", { d, fill: "none", stroke, "stroke-width": 9, filter: "url(#blur)", "stroke-linecap": "round" }, gWires);
+  const line = el("path", { d, fill: "none", stroke, "stroke-width": 3.5, "stroke-linecap": "round" }, gWires);
+  const len = line.getTotalLength();
+  for (const p of [glow, line]) p.setAttribute("stroke-dasharray", `${len} ${len + 10}`);
+  const headGlow = el("circle", { r: 18, filter: "url(#blur)" }, gHeads);
+  const head = el("circle", { r: 7, fill: "#ffffff" }, gHeads);
+  wires.push({ kind, idx, glow, line, len, head, headGlow, color: kind === 1 ? TEAL : PURPLE });
+}
+const mids = [nodes.m1, nodes.m2, nodes.m3];
+mids.forEach((m, i) => addWire(nodes.a, m, 1, i));
+mids.forEach((m, i) => addWire(m, nodes.z, 2, i));
+
+// ---- Per-frame state ----
+function setNode(n, fade, on, color, pulse = 0) {
+  n.g.setAttribute("opacity", fade);
+  n.box.setAttribute("fill", mixColor("#121219", "#262833", on));
+  n.box.setAttribute("stroke", mixColor("#2c2d38", color, on));
+  n.glow.setAttribute("stroke", color);
+  n.glow.setAttribute("opacity", on * (0.55 + 0.35 * pulse));
+  n.dot.setAttribute("fill", mixColor("#3c3e4a", color, on));
+  n.txt.setAttribute("fill", mixColor("#5d5f6b", "#ffffff", on));
+}
+
+function render(t) {
+  const fade = easeOut(prog(t, T.fadeIn));
+  document.getElementById("ghost").setAttribute("opacity", fade);
+
+  setNode(nodes.a, fade, ease(prog(t, T.aOn)), TEAL);
+
+  wires.forEach(w => {
+    const span = w.kind === 1 ? T.wire1 : T.wire2;
+    const off = T.stagger[w.idx];
+    const p = ease(prog(t, [span[0] + off, span[1] + off]));
+    const drawn = p * w.len;
+    for (const path of [w.glow, w.line]) path.setAttribute("stroke-dashoffset", w.len - drawn);
+    w.glow.setAttribute("opacity", 0.9);
+    w.line.setAttribute("opacity", p > 0 ? 1 : 0);
+    // travelling head: visible while drawing, fades out after arrival
+    const pt = w.line.getPointAtLength(Math.max(0.01, drawn));
+    const vis = p <= 0 ? 0 : (p < 1 ? 1 : clamp(1 - (t - (span[1] + off)) / 0.25));
+    for (const c of [w.head, w.headGlow]) { c.setAttribute("cx", pt.x); c.setAttribute("cy", pt.y); }
+    w.head.setAttribute("opacity", vis);
+    w.headGlow.setAttribute("opacity", vis);
+    w.headGlow.setAttribute("fill", w.kind === 1 ? TEAL : mixColor(BLUEMID, PURPLE, p));
+  });
+
+  mids.forEach((m, i) => {
+    const off = T.stagger[i];
+    const on = ease(prog(t, [T.wire1[1] + off - 0.1, T.wire1[1] + off + 0.2]));
+    setNode(m, fade, on, TEAL);
+  });
+
+  const zOn = ease(prog(t, T.zOn));
+  // a soft breathing pulse once the final node is lit
+  const pulse = t > T.zOn[1] ? 0.5 + 0.5 * Math.sin((t - T.zOn[1]) * 4.5) : 0;
+  const pop = 1 + 0.06 * Math.sin(Math.PI * prog(t, [T.zOn[0], T.zOn[1] + 0.15]));
+  setNode(nodes.z, fade, zOn, PURPLE, pulse);
+  const z = nodes.z;
+  z.g.setAttribute("transform", `translate(${z.x},${z.y}) scale(${pop}) translate(${-z.x},${-z.y})`);
+}
+
+window.render = render;
+window.TOTAL = T.total;
+render(0);
+</script>
+</body>
+</html>
