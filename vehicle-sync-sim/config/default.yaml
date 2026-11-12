@@ -1,0 +1,156 @@
+sim:
+  dt: 0.001
+  log_dt: 0.01
+  t_max: 0.0
+  post_landing_time: 1.0
+  seed: 1
+vehicle:
+  speed_kmh: 50.0
+  x0: -90.0
+  lane_y: 10.0
+  width: 1.8
+  length: 4.5
+  accel: 0.0
+  accel_noise: 0.15
+  source_level_db: 72.0
+  speed_exponent_db: 30.0
+  tone_hz: 600.0
+environment:
+  background_db: 50.0
+  background_sigma_db: 1.5
+  sound_speed: 343.0
+  air_density: 1.2
+  gravity: 9.81
+  wind:
+  - 0.0
+  - 0.0
+  gust_sigma: 0.3
+microphone:
+  enabled: true
+  position:
+  - 0.0
+  - 0.0
+  spacing: 0.5
+  frame_dt: 0.02
+  level_noise_db: 1.0
+  sin_bearing_sigma: 0.02
+  min_snr_db: 8.0
+  freq_sigma_hz: 2.0
+  timing:
+    latency: 0.03
+    latency_jitter: 0.005
+    clock_offset: 0.0
+    dropout: 0.0
+radar:
+  enabled: true
+  position:
+  - 0.0
+  - 0.0
+  boresight_deg: -70.0
+  fov_deg: 40.0
+  max_range: 60.0
+  rate_hz: 20.0
+  noise: 0.15
+  bias: 0.0
+  carrier_hz: 24125000000.0
+  timing:
+    latency: 0.05
+    latency_jitter: 0.01
+    clock_offset: 0.0
+    dropout: 0.05
+lidar:
+  enabled: true
+  gates_x:
+  - -25.0
+  - -22.0
+  mount_y: 0.0
+  rate_hz: 200.0
+  range_noise: 0.03
+  max_range: 40.0
+  gate_clock_offsets:
+  - 0.0
+  - 0.0
+  timing:
+    latency: 0.01
+    latency_jitter: 0.002
+    clock_offset: 0.0
+    dropout: 0.0
+trigger:
+  threshold_db: 5.0
+  release_db: 3.0
+  min_frames: 3
+  hold_s: 1.5
+  floor_alpha: 0.002
+  floor_alpha_down: 0.05
+estimator:
+  use_radar: true
+  use_lidar: true
+  use_mic_bearing: true
+  compensate_sound_delay: true
+  bearing_var_inflation: 2.0
+  accel_sigma: 0.6
+  lateral_accel_sigma: 0.05
+  init_speed_kmh: 50.0
+  init_speed_sigma: 6.0
+  nominal_width: 1.8
+  width_sigma: 0.15
+  nominal_length: 4.5
+  length_sigma: 0.4
+  compute_latency: 0.004
+  compute_jitter: 0.001
+prediction:
+  horizon_s: 1.0
+payload:
+  mass: 0.03
+  diameter: 0.07
+  drag_coeff: 0.47
+  launch_speed: 7.0
+  launch_speed_sigma: 0.08
+  elevation_deg: 35.0
+  elevation_sigma_deg: 0.5
+  height: 1.0
+gantry:
+  x_range:
+  - 0.0
+  - 4.0
+  y_range:
+  - 0.0
+  - 1.2
+  home:
+  - 2.0
+  - 0.6
+  v_max: 1.0
+  a_max: 3.0
+  axis_mass: 2.0
+  friction: 4.0
+  force_max: 40.0
+  natural_freq: 40.0
+  damping: 0.9
+  ki: 200.0
+  position_noise: 0.0005
+release:
+  latency: 0.02
+  latency_jitter: 0.004
+  commit_lead: 0.3
+  settle_tolerance: 0.01
+zone:
+  x_range:
+  - 0.5
+  - 3.5
+  y_range:
+  - 5.0
+  - 6.5
+planner:
+  landing_offset_s: 0.0
+  aim_candidates: 25
+  slack_margin: 0.15
+  w_change: 0.5
+  w_slack: 4.0
+safety:
+  lane_clearance_min: 1.5
+  sigma_k: 3.0
+  max_position_sigma: 0.6
+  max_speed_sigma: 1.0
+  speed_range_kmh:
+  - 5.0
+  - 130.0

@@ -1,0 +1,22 @@
+[project]
+name = "vehicle-sync-sim"
+version = "0.1.0"
+description = "Simulation of a sensor-triggered, vehicle-synchronised payload release into an isolated test zone"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "PyYAML>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+simcore = "simcore.__main__:main"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["simcore*"]
+
+[tool.setuptools.package-data]
+"simcore.viewer" = ["static/*"]

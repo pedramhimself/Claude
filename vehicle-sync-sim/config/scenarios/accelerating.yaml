@@ -1,0 +1,3 @@
+# Vehicle accelerating at 1.5 m/s^2: violates the constant-velocity model.
+vehicle:
+  accel: 1.5

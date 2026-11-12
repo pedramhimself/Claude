@@ -1,0 +1,4 @@
+# Lane moved to 7 m: the landing zone is now too close to the vehicle's path.
+# The safety gate must refuse to release (lane_clearance check).
+vehicle:
+  lane_y: 7.0

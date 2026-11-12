@@ -1,0 +1,4 @@
+# Forecast cross/tail wind plus large unknown gusts: wider landing dispersion.
+environment:
+  wind: [2.0, -1.5]
+  gust_sigma: 1.0

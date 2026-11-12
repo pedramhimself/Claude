@@ -1,0 +1,12 @@
+# Noisy, slow sensors and a mis-synchronised light-gate clock.
+radar:
+  noise: 0.5
+  timing: {latency: 0.2, latency_jitter: 0.03, dropout: 0.2}
+microphone:
+  timing: {latency: 0.12, latency_jitter: 0.02}
+lidar:
+  gate_clock_offsets: [0.0, 0.008]
+  timing: {latency: 0.08, latency_jitter: 0.01}
+estimator:
+  compute_latency: 0.03
+  compute_jitter: 0.01

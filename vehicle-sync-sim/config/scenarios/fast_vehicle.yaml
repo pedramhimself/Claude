@@ -1,0 +1,3 @@
+# 90 km/h: less time between the light gates and the release.
+vehicle:
+  speed_kmh: 90

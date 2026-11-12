@@ -1,0 +1,105 @@
+<title>Pass-By Release Simulator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>/*__STYLE__*/</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Pass-By Release Simulator</h1>
+      <p>A vehicle passes the sensor rig. The system detects it, estimates its speed and lane offset, predicts when it will be abeam the test zone, then moves a two-axis gantry and releases a soft payload so it lands in the isolated zone at that moment.</p>
+    </div>
+    <span class="badge" id="mode-badge">loading</span>
+  </header>
+</div>
+
+<div class="bar">
+  <div class="wrap">
+    <label for="scenario" class="muted">Scenario</label>
+    <select id="scenario"></select>
+    <button id="play" class="primary" type="button">Play</button>
+    <select id="rate" aria-label="Playback speed">
+      <option value="0.25">0.25×</option>
+      <option value="0.5" selected>0.5×</option>
+      <option value="1">1×</option>
+    </select>
+    <div class="scrub">
+      <input id="scrub" type="range" min="0" max="1000" value="1000" step="1" aria-label="Simulation time">
+      <span class="clock" id="clock">0.00 s</span>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <p class="scenario-desc" id="scenario-desc"></p>
+  <div class="states" id="states"></div>
+  <div class="readouts" id="readouts"></div>
+
+  <section class="panel" aria-labelledby="plan-title">
+    <div class="panel-head">
+      <h2 id="plan-title">Plan view</h2>
+      <div class="seg" role="group" aria-label="Plan view zoom">
+        <button type="button" data-zoom="range" aria-pressed="true">Detection range</button>
+        <button type="button" data-zoom="rig" aria-pressed="false">Rig close-up</button>
+      </div>
+    </div>
+    <canvas id="plan" role="img" aria-label="Top-down view of road, sensors, test zone and gantry"></canvas>
+    <div class="legend">
+      <span><i style="background:var(--vehicle)"></i>vehicle (truth)</span>
+      <span><i style="background:var(--estimate)"></i>tracked estimate ± 2σ</span>
+      <span><i class="dash" style="color:var(--estimate)"></i>predicted position after τ</span>
+      <span><i style="background:var(--sensor)"></i>sensor beams</span>
+      <span><i class="box" style="background:var(--zone);border:1px solid var(--payload)"></i>test zone</span>
+      <span><i class="box" style="background:var(--keepout)"></i>keep-out corridor</span>
+      <span><i style="background:var(--payload)"></i>gantry, payload, landing</span>
+    </div>
+  </section>
+
+  <div class="grid-2">
+    <section class="panel" aria-labelledby="side-title">
+      <div class="panel-head"><h2 id="side-title">Payload flight, side elevation</h2><span class="muted mono" id="flight-note"></span></div>
+      <canvas id="side" role="img" aria-label="Side view of the payload trajectory"></canvas>
+    </section>
+    <section class="panel" aria-labelledby="events-title">
+      <div class="panel-head"><h2 id="events-title">Event log</h2></div>
+      <ul class="events" id="events"></ul>
+    </section>
+  </div>
+
+  <div class="charts" id="charts"></div>
+
+  <div class="grid-2">
+    <section class="panel" aria-labelledby="result-title">
+      <div class="panel-head"><h2 id="result-title">Run result</h2><span id="result-pill"></span></div>
+      <table class="kv" id="result"></table>
+    </section>
+    <section class="panel" aria-labelledby="safety-title">
+      <div class="panel-head"><h2 id="safety-title">Safety gate</h2></div>
+      <p class="muted" style="font-size:13px">Release is allowed only if every check passes at the release instant.</p>
+      <div class="checks" id="checks"></div>
+      <table class="kv" id="checks-table" style="margin-top:8px"></table>
+    </section>
+  </div>
+
+  <div id="controls-host"></div>
+
+  <section class="mc panel" aria-labelledby="mc-title">
+    <div class="panel-head"><h2 id="mc-title">Monte Carlo</h2><span class="muted" id="mc-meta"></span></div>
+    <p class="muted" style="font-size:13px">Each trial redraws sensor noise, dropouts, latency jitter, vehicle speed wander, launch dispersion and wind gusts, and randomises speed and lane offset. If the error model is right, the measured timing spread matches the planner's predicted σ<sub>t</sub>.</p>
+    <div class="mc-row" id="mc-actions"></div>
+    <div class="stats" id="mc-stats"></div>
+    <div class="mc-grid">
+      <div><h3>Landing relative to the vehicle</h3><canvas id="mc-scatter" role="img" aria-label="Scatter of landing errors"></canvas></div>
+      <div><h3>Timing error histogram</h3><canvas id="mc-hist" role="img" aria-label="Histogram of timing errors"></canvas></div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">
+  Simulation only. The landing zone is fixed and separated from the lane by a keep-out corridor; the safety gate refuses any release whose 3σ landing ellipse could reach it.
+</footer>
+
+<!--__DATA__-->
+<script>/*__APP__*/</script>

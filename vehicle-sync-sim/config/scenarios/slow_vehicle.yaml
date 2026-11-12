@@ -1,0 +1,3 @@
+# 30 km/h: quieter (later trigger) but plenty of time; longer prediction horizon.
+vehicle:
+  speed_kmh: 30

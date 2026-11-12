@@ -1,0 +1,4 @@
+# Quiet electric vehicle: the acoustic trigger fires only after the vehicle has
+# passed the light gates, so no track is formed and the system stands down.
+vehicle:
+  source_level_db: 60
